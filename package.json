@@ -1,0 +1,27 @@
+{
+  "name": "@nxt-web/micro-server",
+  "version": "1.0.0",
+  "description": "fastest http(&amp; https/http2.0) server for node.js",
+  "main": "micro-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/igal-abachi-dev/micro-server.js.git"
+  },
+  "keywords": [
+    "node",
+    "js",
+    "http",
+    "server",
+    "fast",
+    "router"
+  ],
+  "author": "igal abachi <igal.abachi.workmail@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/igal-abachi-dev/micro-server.js/issues"
+  },
+  "homepage": "https://github.com/igal-abachi-dev/micro-server.js#readme"
+}
