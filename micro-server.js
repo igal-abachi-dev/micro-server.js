@@ -20,6 +20,15 @@ const {startCluster} = require('./clusterizer.js');
 
 const _ = require('lodash');
 
+const compression = require('compression');
+
+const warning = (message) => chalk`{yellow WARNING:} ${message}`;
+const info = (message) => chalk`{magenta INFO:} ${message}`;
+const error = (message) => chalk`{red ERROR:} ${message}`;
+
+//const readFile = Promise.promisify(fs.readFile);
+//const compressionHandler = Promise.promisify(compression());
+
 
 function serveStaticPaths(path) {
     // Serve up public/ftp folder
@@ -82,6 +91,21 @@ function close(httpServer) {
     return new Promise(resolve => httpServer.close(resolve));
 }
 
+const registerShutdown = (fn) => {
+    let run = false;
+
+    const wrapper = () => {
+        if (!run) {
+            run = true;
+            fn();
+        }
+    };
+
+    process.on('SIGINT', wrapper);
+    process.on('SIGTERM', wrapper);
+    process.on('exit', wrapper);
+};
+
 //factory: server(ctx=module[ctrl,svc])
 function initServer(config) {
     //publicFolder = serveStaticPaths('public');
@@ -92,6 +116,11 @@ function initServer(config) {
         urlInfo(req);
 
         req.body = parseBody(req.data, config.parseJson);
+        //
+        // if (compress) {
+        //     await compressionHandler(request, response);
+        // }
+
 
         //publicFolder(req, res, finalhandler(req, res));
         // https://github.com/pillarjs/finalhandler
@@ -105,13 +134,24 @@ function initServer(config) {
         listen: (port = 3000) => {
             console.log('listening on: ' + webHost + ':' + port + ' ...');
             server.on('error', function (e) {
+                //'EADDRINUSE'
                 console.log(e);
+                //	process.exit(1);
             });
 
             server.listen(port, webHost);
         }
     }
 
+    //
+    // registerShutdown(() => {
+    //     console.log(`\n${info('Gracefully shutting down. Please wait...')}`);
+    //
+    //     process.on('SIGINT', () => {
+    //         console.log(`\n${warning('Force-closing all open sockets...')}`);
+    //         process.exit(0);
+    //     });
+    // });
 
     const _initRouter = (cb) => {
         if (cb) {
@@ -126,6 +166,7 @@ function initServer(config) {
 }
 
 module.exports = (config = {}) => {
+    //load from file? 'config.json'
     let _cfg = {
         allowCORS: true,
         https: null,

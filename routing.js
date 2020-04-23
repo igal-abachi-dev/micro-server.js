@@ -53,6 +53,12 @@ function lookupRoute(req, res, defaultRoute, isRespMsgPack) {
         } catch (err) {
             console.error(err);
             //   return errorHandler(err, req, res)
+            /*{
+			statusCode: 400,
+			code: 'bad_request',
+			message: 'Bad Request'
+		}
+            */
         }
     };
     return handle;
@@ -65,6 +71,21 @@ api.attachRouter = function (server, cfg) {
     server.on('request', (req, res) => {
         setImmediate(() => lookupRoute(req, res, cfg.defaultRoute, cfg.isRespMsgPack));
     });
+
+    //
+    // exports.run = (req, res, fn) =>
+    //     new Promise(resolve => resolve(fn(req, res)))
+    //         .then(val => {
+    //             if (val === null) {
+    //                 send(res, 204, null);
+    //                 return;
+    //             }
+    //             if (val !== undefined) {
+    //                 send(res, res.statusCode || 200, val);
+    //             }
+    //         })
+    //         .catch(err => sendError(req, res, err));
+
     return router;
 };
 api.initSchemas = function (dtoSchemas) {

@@ -1,5 +1,5 @@
 const {parse} = require('querystring');
-
+//require('raw-body'); -> buffer ->string -> json
 
 function parseBody(body , parseJson=true) {
     if (parseJson) {
