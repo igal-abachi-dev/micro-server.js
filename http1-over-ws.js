@@ -4,6 +4,8 @@ const REQUEST_EVENT = 'request'
 //"uWebSockets.js": "github:uNetworking/uWebSockets.js#binaries"
         //"github:uNetworking/uWebSockets.js#v16.4.0"
 
+//https://github.com/sifrr/sifrr/blob/master/packages/server/sifrr-server/src/server/baseapp.ts
+
 module.exports = (config = {}) => {
     let handler = (req, res) => {
         //mw?
