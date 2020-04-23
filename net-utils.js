@@ -45,10 +45,10 @@ function sendEmpty(res, code = 200) {
     res.end();
 }
 
-function sendMsgPack(res, data) {
-    const msgpackResponse = msgpack.encode({//faster binary communication
-        data
-    });
+function sendMsgPack(res, result) {
+    const msgpackResponse = msgpack.encode(//faster binary communication
+        result.data
+    );
     res.writeHead(200, {
         'Content-Type': 'application/x-msgpack;', // application/vnd.msgpack , application/msgpack
         'Content-Length': msgpackResponse.length,

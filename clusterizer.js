@@ -53,6 +53,7 @@ function startCluster(startServerRoutine) {
             console.log(`worker ${worker.process.pid} closed`);
             //var worker = cluster.fork(); //endless loop on ctrl+c
         });
+        return null;
     } else {
         console.log(` Worker ${process.pid} started`);
         sigQuitHandler(false);

@@ -107,21 +107,77 @@ const registerShutdown = (fn) => {
     process.on('exit', wrapper);
 };
 
+function onParseBody(bodyText, req) {
+    try {
+        //[json / qs / text]
+        req.body = parseBody(bodyText, req.headers['content-type']);
+    } catch (err) {
+        console.error(err,null);
+        req.body = bodyText;
+    }
+}
+
+
 //factory: server(ctx=module[ctrl,svc])
 function initServer(config) {
+
+    let compressionMw;
+    if (config.compress && !config.isRespMsgPack) {
+        compressionMw = compression({
+            filter: function (req, res) {
+                if (req.headers['x-no-compression']) {
+                    // don't compress responses with this request header
+                    return false
+                }
+
+                // fallback to standard filter function
+                return compression.filter(req, res)
+            },
+            level: 1
+        }) //zlib.Z_BEST_SPEED 1 instead of default 6 (& 9 is best compression but slowest)
+    }
+
     //publicFolder = serveStaticPaths('public');
     const mw = function (req, res, next) {
         if (config.allowCORS)
-            this.cors(req, res, next)
+            cors(req, res, next);
 
         urlInfo(req);
 
-        req.body = parseBody(req.data, config.parseJson);
-        //
-        // if (compress) {
-        //     await compressionHandler(request, response);
-        // }
+        //parse body:
+        if (req.method === "POST" || req.method === "PUT") {
+            let body = '';
+            req.on('error', (err) => {
+                console.error(err,null);
+            }).on('data', (chunk) => {
+                body += chunk.toString(); //no need to limit
+            }).on('end', () => {
+              //  setImmediate(()=>{
+                    onParseBody(body,req);
+              //  });
 
+                //mmckelvy/parse-body npm
+                // delvedor/fast-json-body
+                //raw-body / co-body
+
+            });
+
+            /*
+             let body = '';
+    req.on('data', chunk => {
+        body += chunk.toString(); // convert Buffer to string
+    });
+    req.on('end', () => {
+        console.log(body);
+        res.end('ok');
+    });
+            */
+        }
+
+        if (compressionMw != null && !req.headers['x-no-compression']) {
+            compressionMw(req, res, () => {
+            }); //zopfli? brotli?
+        }
 
         //publicFolder(req, res, finalhandler(req, res));
         // https://github.com/pillarjs/finalhandler
@@ -154,16 +210,17 @@ function initServer(config) {
     //     });
     // });
 
-    const _initRouter = (cb) => {
+    const _init = (cb) => {
         if (cb) {
             /* http.METHODS.map(m=>m.toLowerCase())*/
             let schemas = {};
+            //routes are case-sensitive!
             cb(router, schemas);
             initSchemas(schemas);
             return _server;//fluent:   initRouter(router=>{}).listen(3000);
         }
     };
-    return _initRouter;
+    return _init;
 }
 
 //https://swagger.io/
@@ -182,23 +239,17 @@ module.exports = (config = {}) => {
         // },
         http2: false,//must be https to use in browser , unsecured http2 only for micro-services
         parseJson: true,
-        clustered: true,
+        compress: true, //if not msgPack[strings compressed with brotli]
+        // clustered: true,
         allowExtrernalCalls: true,
         isRespMsgPack: false, // or json response,
         defaultRoute: null //handler(req,res)=>{}
     }
     Object.assign(_cfg, config);
-    let initPromise;
+    //        initPromise = startCluster(initServer)(_cfg);
 
-    //clustering...
-    if (_cfg.clustered) {
-        initPromise = startCluster(initServer)(_cfg);
-    } else {
-        initPromise = Promise.promisify(initServer)(_cfg);
-    }
-    return initPromise.then(function (routerCb) {
-        return {
-            initRouter: routerCb
-        }
-    });
+    return {
+        //routes are case-sensitive!
+        init: initServer(_cfg)
+    };
 }
