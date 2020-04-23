@@ -1,209 +1,157 @@
 const http = require('http') //supports https & http2 (unlike nanoexpress)
-const { parse } = require('querystring')
-
-const KoaRadixTreeRouter = require('koa-tree-router') //lru cache?
-
-const msgpack = require('msgpack-lite');
-const fastJson = require('fast-json-stringify')
 
 
+//const fs = require('fs');
 
-//ajv json schema
-// const stringify = fastJson({
-//   type: 'object',
-//   properties: {
-//     firstName: {
-//       type: 'string'
-//     },
-//     lastName: {
-//       type: 'string'
-//     },
-//     age: {
-//       type: 'integer'
-//     },
-//     reg: {
-//       type: 'string'
-//     }
-//   }
-//  required: ['firstName']
-// })
+//const serveStaticFolder = require('serve-static');
+//var contentDisposition = require('content-disposition');//https://github.com/jshttp/content-disposition
 
-//bluebird
+//const {bench} = require('./bench.js');
+
+const {attachRouter, initSchemas} = require('./routing.js');
+
+const {urlInfo} = require('./url-utils.js');
+
+const {parseBody} = require('./string-utils.js');
+
+const {Promise} = require("bluebird");
+
+const {startCluster} = require('./clusterizer.js');
+
+const _ = require('lodash');
 
 
+function serveStaticPaths(path) {
+    // Serve up public/ftp folder
+    return serveStaticFolder(path.join(__dirname, path), {
+        'index': false,
+        'setHeaders': (res, path) => {
+            res.setHeader('Content-Disposition', contentDisposition(path))
+        }
+    });
+}
 
-function sanitizeUrl (url) {
-  for (var i = 0, len = url.length; i < len; i++) {
-    var charCode = url.charCodeAt(i)
-    // Some systems do not follow RFC and separate the path and query
-    // string with a `;` character (code 59), e.g. `/foo;jsessionid=123456`.
-    // Thus, we need to split on `;` as well as `?` and `#`.
-    if (charCode === 63 || charCode === 59 || charCode === 35) {
-      return url.slice(0, i)
+function cors(req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Request-Method', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, MERGE, PATCH, DELETE')
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+    res.setHeader('Access-Control-Allow-Credentials', true)
+    //
+    // if (req.method === "OPTIONS") {
+    //   res.writeHead(200);
+    //   res.end();
+    //   return;
+    // }
+    // next();
+}
+
+
+function chooseServerType(config, mw) {
+    let server;
+    if (config.https != null) {
+        if (config.http2 == true) {
+            //res.setHeader('Content-Type', 'text/html');
+
+            server = require('http2').createSecureServer({
+                key: config.https.key,
+                cert: config.https.cert,
+                allowHTTP1: true //compatibility
+            }, mw);
+        } else {
+            server = require('https').createServer(options.https, mw);
+            server.keepAliveTimeout = 5000;
+        }
+    } else if (config.http2 == true) {
+        server = require('http2').createServer(mw);
+        //unsecured http2
+        server.on('session', function (session) {
+            session.setTimeout(5000, session.close)
+        })
+    } else {
+        server = http.createServer(mw);
+        server.keepAliveTimeout = 5000;
     }
-  }
-  return url
+    return server;
 }
 
-function lookup (req, res, defaultRoute) {
-  const _router = router;
+function close(httpServer) {
+    if (!httpServer) {
+        return undefined;
+    }
+    return new Promise(resolve => httpServer.close(resolve));
+}
 
-  const handle = function(req, res) {
-    const { handle, params } = _router.find(req.method, this.sanitizeUrl(req.path));
-    if (!handle) {
-      if (defaultRoute !== null) {
-        return defaultRoute(req, res)
-      } else {
-        res.statusCode = 404
-        res.end()
-        return ;
-      }
+//factory: server(ctx=module[ctrl,svc])
+function initServer(config) {
+    //publicFolder = serveStaticPaths('public');
+    const mw = function (req, res, next) {
+        if (config.allowCORS)
+            this.cors(req, res, next)
+
+        urlInfo(req);
+
+        req.body = parseBody(req.data, config.parseJson);
+
+        //publicFolder(req, res, finalhandler(req, res));
+        // https://github.com/pillarjs/finalhandler
     }
 
-    //params.push({ key: n.path.slice(1), value: path.slice(0, end) });
-    //    let _params = {}
-//    params.forEach(({ key, value }) => { //array to obj
-//      _params[key] = value;
-//    });//
-    try {
-      return handle( req, res, params);
-    } catch (err) {
-   //   return errorHandler(err, req, res)
+    const server = chooseServerType(config, mw);
+    const router = attachRouter(server, config);
+
+    const webHost = config.allowExtrernalCalls ? '0.0.0.0' : '127.0.0.1';
+    const _server = {
+        listen: (port = 3000) => {
+            console.log('listening on: ' + webHost + ':' + port + ' ...');
+            server.on('error', function (e) {
+                console.log(e);
+            });
+
+            server.listen(port, webHost);
+        }
     }
-  };
-  return handle;
-}
 
 
-
-function cors (req, res, next) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Request-Method', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, MERGE, PATCH, DELETE')
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
-  res.setHeader('Access-Control-Allow-Credentials', true)
-  //
-  // if (req.method === "OPTIONS") {
-  //   res.writeHead(200);
-  //   res.end();
-  //   return;
-  // }
-  // next();
-}
-
-function urlInfo (req) {
-  let url = req.url
-  let obj = req._parsedUrl
-  if (obj && obj._rawUrl === url) return obj
-  obj = {}
-  let idx = url.indexOf('?', 1)
-  if (idx !== -1) {
-    let query = url.substring(idx + 1)
-    obj.query = query != null ? parse(query) : {}
-    obj.path = url.substring(0, idx)
-  }
-  obj._rawUrl = url
-  return (req._parsedUrl = obj)
-}
-
-function sendJson(res, data) {
-  if (data == "error") {
-    data = {
-      error: data
+    const _initRouter = (cb) => {
+        if (cb) {
+            /* http.METHODS.map(m=>m.toLowerCase())*/
+            let schemas = {};
+            cb(router, schemas);
+            initSchemas(schemas);
+            return _server;//fluent:   initRouter(router=>{}).listen(3000);
+        }
     };
-  }
-
-  //schema
-  const jsonResponse = JSON.stringify({
-    data
-  });
-
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Content-Length', Buffer.byteLength(jsonResponse));
-
-  res.statusCode = 200;
-  res.end(jsonResponse, 'utf8');
-};
-
-function sendEmpty(res,code=200){
-  res.statusCode = code;
-  res.end();
+    return _initRouter;
 }
-
-function sendMsgPack(res, data) {
-  const msgpackResponse = msgpack.encode({//faster binary communication
-    data
-  });
-  res.writeHead(200, {
-    'Content-Type': 'application/x-msgpack;', // application/vnd.msgpack , application/msgpack
-    'Content-Length': msgpackResponse.length,
-  });
-  res.end(msgpackResponse);
-};
-
-function compressStr(result) {
-
-  const hasResult = (result != null && result.length > 0);
-  const Bytes = hasResult
-    ? Buffer.from(result)
-    : new Uint8Array(0);
-
-  if (brotli == null) {
-    brotli = require('brotli');
-  }
-  const data = {
-    hasResult,
-    Result: brotli.compress(Bytes) //x8 less size
-  };
-  return data;
-};
-//
-// router.on('GET', '/posts', (req, res, params) => {
-//
-// })
 
 module.exports = (config = {}) => {
-
-  let _cfg = {
-    allowCORS: true,
-    parseJson: true,
-    clustered: true,
-    allowExtrernalCalls: true,
-    port: 3000,
-    isRespMsgPack:false, //json,
-    defaultRoute:null //(req,res)=>{}
-  }
-  Object.assign(_cfg, config)
-
-  const router = new KoaRadixTreeRouter()
-  const mw = function (req, res, next) {
-  if(_cfg.allowCORS)
-    this.cors(req, res, next)
-
-    urlInfo(req);
-    if(_cfg.parseJson)
-      req.body = JSON.parse(req.data);
-  }
-  const server = http.createServer(mw())
-
-  server.on('request', (req, res) => {
-    setImmediate(() => this.lookup(req, res, _cfg.defaultRoute));
-  })
-
-  const webHost = _cfg.allowExtrernalCalls ? '0.0.0.0' : '127.0.0.1';
-
-  const _server ={
-    listen: (port=3000)=>{
-      console.log('listening on: ' + webHost + ':' + port + ' ...');
-      server.on('error', function (e) {
-        console.log(e);
-      });
-
-      server.listen(port, webHost);
+    let _cfg = {
+        allowCORS: true,
+        https: null,
+        // {
+        //   key: fs.readFileSync(__dirname + '/server.key'),
+        //   cert:  fs.readFileSync(__dirname + '/server.crt')
+        // },
+        http2: false,//must be https to use in browser , unsecured http2 only for micro-services
+        parseJson: true,
+        clustered: true,
+        allowExtrernalCalls: true,
+        isRespMsgPack: false, // or json response,
+        defaultRoute: null //handler(req,res)=>{}
     }
-  }
-  return {
-    router,
-    _server
-  }
+    Object.assign(_cfg, config);
+    let initPromise;
+
+    //clustering...
+    if (_cfg.clustered) {
+        initPromise = startCluster(initServer)(_cfg);
+    } else {
+        initPromise = Promise.promisify(initServer)(_cfg);
+    }
+    return initPromise.then(function (routerCb) {
+        return {
+            initRouter: routerCb
+        }
+    });
 }
