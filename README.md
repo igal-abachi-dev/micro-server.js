@@ -59,6 +59,7 @@ let server = require('./http/micro-server.js')({
     "moment": "^2.24.0",
     "msgpack-lite": "^0.1.26",
     "nodemailer": "^6.4.6",
-    "serve-static": "^1.14.1"
+    "serve-static": "^1.14.1",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v17.3.0"
   }
 ```
