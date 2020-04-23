@@ -26,7 +26,7 @@ let server = require('../micro-server.js')({
             router.get('/msgPack', (req) => {
                 return {
                     binary: true,
-                    data: api.blog.msgPack(req) //compressed`
+                    data: api.blog.page(req) //brotli compressed
                 };
             });
             router.post('/user/:id', (req) => {
