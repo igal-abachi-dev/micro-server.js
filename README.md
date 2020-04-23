@@ -6,7 +6,7 @@ based on: 0http / polkadot / zeit micro / nest js
 ```javascript
 let server = require('./http/micro-server.js')({
     allowCORS: true,
-    clustered: true,
+    clustered: true, //use all cpu cores
     https: {
            key: fs.readFileSync(__dirname + '/server.key'),
            cert:  fs.readFileSync(__dirname + '/server.crt')
@@ -59,6 +59,7 @@ let server = require('./http/micro-server.js')({
     "moment": "^2.24.0",
     "msgpack-lite": "^0.1.26",
     "nodemailer": "^6.4.6",
-    "serve-static": "^1.14.1"
+    "serve-static": "^1.14.1",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v17.3.0"
   }
 ```
