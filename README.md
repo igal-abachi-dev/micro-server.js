@@ -4,7 +4,7 @@ fastest http(&amp; https/http2.0) server for node.js
 based on: 0http / polkadot / zeit micro / nest js
 
 ```javascript
-let server = require('../micro-server.js')({
+let server = require('./http/micro-server.js')({
     allowCORS: true,
     clustered: true
 });
