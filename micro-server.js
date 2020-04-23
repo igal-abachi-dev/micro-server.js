@@ -167,6 +167,9 @@ function initServer(config) {
 }
 
 //https://swagger.io/
+//"swagger-ui-dist": "^3.23.6"
+
+//passport
 
 module.exports = (config = {}) => {
     //load from file? 'config.json'
