@@ -165,6 +165,8 @@ function initServer(config) {
     return _initRouter;
 }
 
+//https://swagger.io/
+
 module.exports = (config = {}) => {
     //load from file? 'config.json'
     let _cfg = {
