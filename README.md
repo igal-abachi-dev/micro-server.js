@@ -6,7 +6,12 @@ based on: 0http / polkadot / zeit micro / nest js
 ```javascript
 let server = require('./http/micro-server.js')({
     allowCORS: true,
-    clustered: true
+    clustered: true,
+    https: {
+           key: fs.readFileSync(__dirname + '/server.key'),
+           cert:  fs.readFileSync(__dirname + '/server.crt')
+         },
+        http2: true,
 });
 
     server.then(function (initRouter) {
