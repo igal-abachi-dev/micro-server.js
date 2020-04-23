@@ -78,6 +78,7 @@ function chooseServerType(config, mw) {
             session.setTimeout(5000, session.close)
         })
     } else {
+        //require('0http/lib/server/low') / nanoexpress?
         server = http.createServer(mw);
         server.keepAliveTimeout = 5000;
     }
