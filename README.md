@@ -1,10 +1,10 @@
 # micro-server.js
 fastest http(&amp; https/http2.0) server for node.js
 
-
-let server = require('../micro-server.js')(/*ctx ,*/{
+```javascript
+let server = require('../micro-server.js')({
     allowCORS: true,
-    clustered: false
+    clustered: true
 });
 
     server.then(function (initRouter) {
@@ -38,3 +38,4 @@ let server = require('../micro-server.js')(/*ctx ,*/{
     }).catch(function (e) {
         console.error(err);
     });
+```
