@@ -3,7 +3,7 @@
 const {compressStr} = require('../../string-utils.js');
 
 function blog(req) {
-    console.log("GET: /posts", req.params.id, req.query);
+    //console.log("GET: /posts", req.params.id, req.query);
     let post1 = {
         title: "fdsfsdfsdf",
         content: "sdfsdfsdfsdf sdfsdf sdf sdf"

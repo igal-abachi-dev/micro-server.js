@@ -1,0 +1,2 @@
+nodemon example.js
+pause

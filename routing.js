@@ -12,9 +12,11 @@ const {
 
 const {sanitizeUrl} = require('./url-utils.js');
 
+const LRUCache = require('mnemonist/lru-cache');
 
 // mnemonist/lru-cache.js
 
+const cache = new LRUCache(1000);
 
 const router = new KoaRadixTreeRouter();
 let schemas = {};
@@ -24,45 +26,67 @@ function lookupRoute(req, res, defaultRoute, isRespMsgPack) {
 
 //    runs after middleware finished
 
-    const {handle, params} = _router.find(req.method, sanitizeUrl(req.path || req.url));
+
+    let handle_;
+    let params_;
+    const urlPath = sanitizeUrl(req.path || req.url);
+    //cache routes
+    const reqCacheKey = `${req.method + urlPath}`
+    let match = cache.get(reqCacheKey);
+    if (!match) {
+        const {handle, params} = _router.find(req.method, urlPath);
+        cache.set(reqCacheKey, {handle, params});
+        handle_ = handle;
+        params_ = params;
+    } else {
+        handle_ = match.handle;
+        params_ = match.params;
+    }
     //route handlers
-    if (!handle) {
+    if (!handle_) {
         //route search is case-sensitive!
         if (defaultRoute !== null) {
             return defaultRoute(req, res)
         } else {
-            sendEmpty(res,404);
+            sendEmpty(res, 404);
             return;
         }
     }
 
     //route params like /:id
     req.params = {};
-    for (let i = 0; i < params.length; i++) {//kv array to obj map
-        let p = params[i];
+    for (let i = 0; i < params_.length; i++) {//kv array to obj map
+        let p = params_[i];
         req.params[p.key] = p.value;
     }
 
     //chainRequestHandlers(fnArray, req) //many handlers for same route?
 
-    //bluebird promisify()?
     try {
-        let result = null;
-        if (handle.length > 0)
-            result = handle[0](req); //call route handle of api
-
-        //send result
-        if (result == null) {
-            sendEmpty(res);
-        } else {
-            if (isRespMsgPack || result.binary == true) {
-                sendMsgPack(res, result);
+        new Promise((resolve, reject) => { //free networking for more requests
+            let result = null;
+            if (handle_.length > 0)
+                try {
+                    result = handle_[0](req); //main Call route handler of the API
+                } catch (err) {
+                    reject(err);
+                    return null;
+                }
+            return resolve(result);
+        }).then(result => {
+            //send result
+            if (result == null) {
+                sendEmpty(res);
             } else {
-                sendJson(res, result.data, schemas[result.schema])
+                if (isRespMsgPack || result.binary == true) {
+                    sendMsgPack(res, result);
+                } else {
+                    sendJson(res, result.data, schemas[result.schema])
+                }
             }
-        }
+        }).catch(err => console.error(err, null));
     } catch (err) {
-        console.error(err);
+        console.error(err, null);
         //   return errorHandler(err, req, res)
         /*{
         statusCode: 400,
@@ -97,10 +121,10 @@ function chainRequestHandlers(fnArray, req) {
 const api = {};
 api.attachRouter = function (server, cfg) {
     //main request loop
-    server.on('request', (req, res) => {
-        setImmediate(() => lookupRoute(req, res, cfg.defaultRoute, cfg.isRespMsgPack));
-    });
-
+    if (server)
+        server.on('request', (req, res) => {
+            setImmediate(() => lookupRoute(req, res, cfg.defaultRoute, cfg.isRespMsgPack));
+        });
 
 
     //

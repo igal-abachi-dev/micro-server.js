@@ -78,14 +78,18 @@ function chooseServerType(config, mw) {
             session.setTimeout(5000, session.close)
         })
     } else {
-        // nanoexpress?
-        let uWSApp = require('./http1-over-ws');
-        //fast low level http1 using micro web sockets , slim server doesn't have full capabilities like node's http
+        //if(config.useWsHttp1FastServer){
+            /*fast low level http1 using micro web sockets , slim server doesn't have full capabilities like node's http*/
+            //let uWSApp = require('./http1-over-ws');
+            //server = uWSApp(mw);
 
-        server = uWSApp(mw);
-
-        //server = http.createServer(mw);
-        //server.keepAliveTimeout = 5000;
+            //disabled , experimental , less stable for production / clustering
+            //can have errors on very high loads
+       // }
+       // else{
+            server = http.createServer(mw);
+            server.keepAliveTimeout = 5000;
+        //}
     }
     return server;
 }
