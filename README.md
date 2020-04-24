@@ -5,13 +5,19 @@ support clustering on many cores,
 
 and response: json , msgpack , brotli
 
-uses koa-tree-router (radix tree case-sensitive search) for request
- , and fast-json-stringify [ajv schemas] for response
+uses koa-tree-router (radix tree) + [mnemonist/lru-cache] search for request,
+uses bluebird promises for request dispatching,
+ , and fast-json-stringify [ajv schemas] for responses
 
 http server can be chosen: native node.js http class , or faster & slimmer low-level uWebSockets.js http server
+
 [only for http1 , no compression support , not compatible with all node http class apis only some]
 
-based on ideas from: 0http / polkadot / zeit micro / nest js / siffr / nanoexpress
+[for now ws-http mode is disabled , using uWebSockets as http server is not production ready, less stable]
+
+micro-server.js is based on ideas from: 
+
+0http / polkadot / zeit micro / nest js / restana / siffr / nanoexpress
 
 ```javascript
 let server = require('./http/micro-server.js')({
