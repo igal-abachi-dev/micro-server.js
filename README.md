@@ -70,12 +70,16 @@ let server = require('./http/micro-server.js')({
 
 ```javascript
  "dependencies": {
-    "axios": "^0.19.2",
+   "axios": "^0.19.2",
     "bluebird": "^3.7.2",
+    "brotli": "^1.3.2",
     "chalk": "^4.0.0",
+    "compression": "^1.7.4",
+    "eventemitter3": "^4.0.0",
     "fast-json-stringify": "^2.0.0",
     "koa-tree-router": "^0.6.0",
     "lodash": "^4.17.15",
+    "mnemonist": "^0.36.0",
     "moment": "^2.24.0",
     "msgpack-lite": "^0.1.26",
     "nodemailer": "^6.4.6",
