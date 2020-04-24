@@ -78,9 +78,14 @@ function chooseServerType(config, mw) {
             session.setTimeout(5000, session.close)
         })
     } else {
-        //require('0http/lib/server/low') / nanoexpress?
-        server = http.createServer(mw);
-        server.keepAliveTimeout = 5000;
+        // nanoexpress?
+        let uWSApp = require('./http1-over-ws');
+        //fast low level http1 using micro web sockets , slim server doesn't have full capabilities like node's http
+
+        server = uWSApp(mw);
+
+        //server = http.createServer(mw);
+        //server.keepAliveTimeout = 5000;
     }
     return server;
 }
@@ -145,7 +150,7 @@ function initServer(config) {
         urlInfo(req);
 
         //parse body:
-        if (req.method === "POST" || req.method === "PUT") {
+        if (req.body == null && (req.method === "POST" || req.method === "PUT")) {
             let body = '';
             req.on('error', (err) => {
                 console.error(err,null);
@@ -174,7 +179,7 @@ function initServer(config) {
             */
         }
 
-        if (compressionMw != null && !req.headers['x-no-compression']) {
+        if (compressionMw != null && !req.isHttpOverWS && !req.headers['x-no-compression']) {
             compressionMw(req, res, () => {
             }); //zopfli? brotli?
         }
@@ -196,7 +201,7 @@ function initServer(config) {
                 //	process.exit(1);
             });
 
-            server.listen(port, webHost);
+            server.listen(port, webHost,()=>{});
         }
     }
 
@@ -237,10 +242,10 @@ module.exports = (config = {}) => {
         //   key: fs.readFileSync(__dirname + '/server.key'),
         //   cert:  fs.readFileSync(__dirname + '/server.crt')
         // },
-        http2: false,//must be https to use in browser , unsecured http2 only for micro-services
+        http2: false,//must beused with  https to use in browser , unsecured http2 only for micro-services
         parseJson: true,
         compress: true, //if not msgPack[strings compressed with brotli]
-        // clustered: true,
+        useWsHttp1FastServer: true, //experimental
         allowExtrernalCalls: true,
         isRespMsgPack: false, // or json response,
         defaultRoute: null //handler(req,res)=>{}

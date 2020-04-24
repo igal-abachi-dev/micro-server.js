@@ -8,7 +8,7 @@ function sendJson(res, data, stringifyBySchema) {
     }
 
 //https://ajv.js.org/
-    
+
 //ajv json schema
 // const stringify = fastJson({
 //   type: 'object',
@@ -49,10 +49,16 @@ function sendMsgPack(res, result) {
     const msgpackResponse = msgpack.encode(//faster binary communication
         result.data
     );
-    res.writeHead(200, {
-        'Content-Type': 'application/x-msgpack;', // application/vnd.msgpack , application/msgpack
-        'Content-Length': msgpackResponse.length,
-    });
+    if (res.isHttpOverWS) {
+        res.setHeader('Content-Type', 'application/x-msgpack');
+        res.setHeader('Content-Length', msgpackResponse.length);
+        res.statusCode = 200;
+    } else {
+        res.writeHead(200, {
+            'Content-Type': 'application/x-msgpack', // application/vnd.msgpack , application/msgpack
+            'Content-Length': msgpackResponse.length,
+        });
+    }
     res.end(msgpackResponse);
 };
 

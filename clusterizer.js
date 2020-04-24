@@ -59,8 +59,10 @@ function startCluster(startServerRoutine) {
         sigQuitHandler(false);
 
         try {
-            let serverFactory = Promise.promisify(startServerRoutine);
-            return serverFactory;
+           // let serverFactory = Promise.promisify(startServerRoutine);
+            //return serverFactory;
+
+            startServerRoutine();
         } catch (err) {
             console.error(err);
         }
