@@ -23,50 +23,86 @@ micro-server.js is based on ideas from:
 
 0http / polkadot / zeit micro / nest js / restana / siffr / nanoexpress
 
+main app.js:
 ```javascript
-let server = require('./http/micro-server.js')({
-    allowCORS: true,
-    clustered: true, //use all cpu cores
-    https: {
+require('./http/clusterizer.js').startCluster(()=>{
+    const {dtoSchemas} = require('./example.schemas.js');
+    const {routes} = require('./example.routes.js');
+
+    require('./http/micro-server.js')({
+        allowCORS: true,
+        https: {
            key: fs.readFileSync(__dirname + '/server.key'),
            cert:  fs.readFileSync(__dirname + '/server.crt')
          },
         http2: true,
+    }).init(function (router, schemas) {
+        dtoSchemas(schemas);
+        routes(router);
+    }).listen(3000);
 });
-
-    server.then(function (initRouter) {
-        const {dtoSchemas} = require('./example.schemas.js');
-        const api = {
-            blog: require('./controllers/blog.js'),
-            users: require('./controllers/users.js')
-        };
-
-        function routes(router, schemas) {
-            dtoSchemas(schemas);
-
-            router.get('/posts', (req) => {
-                return {
-                    schema: 'post',
-                    data: api.blog.posts(req)
-                };
-            });
-            router.get('/msgPack', (req) => {
-                return {
-                    binary: true,
-                    data: api.blog.page(req) //brotli compressed
-                };
-            });
-            router.post('/user/:id', (req) => {
-                api.users.updateUser(req); //write to db
-            });
-        }
-
-        initRouter(routes).listen(3000);
-    }).catch(function (e) {
-        console.error(err);
-    });
 ```
 
+routes:
+```javascript
+const api = {
+    blog: {},
+    users: {}
+};
+initApiControllers();
+
+function routes(router) {
+    router.get('/posts', (req) => {
+        return {
+            schema: 'post',
+            data: api.blog.posts(req)
+        };
+    });
+    router.get('/msgPack', (req) => {
+        return {
+            binary: true,
+            data: api.blog.msgPack(req) //brotli compressed
+        };
+    });
+    router.post('/user/:id', (req) => {
+        api.users.updateUser(req); //write to db
+    });
+}
+
+function initApiControllers(){
+    try {
+        api.blog = require('./controllers/blog.js');
+    } catch (e) {
+        console.error(e)
+    }
+    try {
+        api.users = require('./controllers/users.js');
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+```
+
+stringify ajv schemas:
+```javascript
+function blogController_Schemas(schemas) {
+
+    schemas['post'] = {
+        type: 'object',
+        properties: {
+            title: {
+                type: 'string'
+            },
+            content: {
+                type: 'string'
+            }
+        },
+        required: ['title']
+    };
+}
+
+```
 
 ```javascript
  "dependencies": {
