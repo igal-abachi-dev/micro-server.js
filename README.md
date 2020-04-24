@@ -6,8 +6,12 @@ support clustering on many cores,
 and response: json , msgpack , brotli
 
 uses koa-tree-router (radix tree) + [mnemonist/lru-cache] search for request,
+
 uses bluebird promises for request dispatching,
+
  , and fast-json-stringify [ajv schemas] for responses
+
+
 
 http server can be chosen: native node.js http class , or faster & slimmer low-level uWebSockets.js http server
 
