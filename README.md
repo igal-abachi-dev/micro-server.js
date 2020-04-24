@@ -1,9 +1,9 @@
 # micro-server.js
 fastest http(&amp; https/http2.0) server for node.js
 
-support clustering on many cores, 
+supports clustering on many cores, 
 
-and response: json , msgpack , brotli
+and response of type: json , msgpack , brotli
 
 #### uses koa-tree-router (radix tree) + [mnemonist/lru-cache] search for request,
 
