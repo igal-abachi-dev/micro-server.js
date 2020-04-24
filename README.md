@@ -23,6 +23,12 @@ micro-server.js is based on ideas from:
 
 0http / polkadot / zeit micro / nest js / restana / siffr / nanoexpress
 
+to start using: 
+clone into ./http folder of the using project:
+```
+git clone https://github.com/igal-abachi-dev/micro-server.js.git
+```
+
 main app.js:
 ```javascript
 require('./http/clusterizer.js').startCluster(()=>{
