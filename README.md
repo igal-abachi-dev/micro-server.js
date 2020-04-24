@@ -12,13 +12,15 @@ and response: json , msgpack , brotli
 ####  , and fast-json-stringify [ajv schemas] for responses
 
 uses fast zlib compression level
-
+___
 
 http server can be chosen: native node.js http class , or faster & slimmer low-level uWebSockets.js http server
 
 [only for http1 , no compression support , not compatible with all node http class apis only some]
 
 [for now ws-http mode is disabled , using uWebSockets as http server is not production ready, less stable]
+
+___
 
 micro-server.js is based on ideas from: 
 
