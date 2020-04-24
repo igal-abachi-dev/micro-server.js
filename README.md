@@ -1,7 +1,17 @@
 # micro-server.js
 fastest http(&amp; https/http2.0) server for node.js
 
-based on: 0http / polkadot / zeit micro / nest js
+support clustering on many cores, 
+
+and response: json , msgpack , brotli
+
+uses koa-tree-router (radix tree case-sensitive search) for request
+ , and fast-json-stringify [ajv schemas] for response
+
+http server can be chosen: native node.js http class , or faster & slimmer low-level uWebSockets.js http server
+[only for http1 , no compression support , not compatible with all node http class apis only some]
+
+based on ideas from: 0http / polkadot / zeit micro / nest js / siffr / nanoexpress
 
 ```javascript
 let server = require('./http/micro-server.js')({
