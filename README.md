@@ -112,10 +112,7 @@ function blogController_Schemas(schemas) {
     
     schemas['arr'] = {
   title: ' array',
-  type: 'object',
-  properties: {
-    ids: {
-      type: 'array',
+  type: 'array',
       items: [
         {
           type: 'object',
@@ -126,8 +123,6 @@ function blogController_Schemas(schemas) {
           }
         }
       ]
-    }
-  }
 };
 
 }
