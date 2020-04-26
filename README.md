@@ -73,6 +73,21 @@ function routes(router) {
             data: api.blog.msgPack(req) //brotli compressed
         };
     });
+    
+    //return delayed result from callback instead of immediate result from return val;\
+    router.get('/api/ntp2', (req, send) => {
+        api.time.ntp(function (result) {
+            send({
+                schema: 'ntp',
+                data: result || {}
+            });
+        }, 0);
+
+        return {
+            __delayed: true
+        };
+    });
+    
     router.post('/user/:id', (req) => {
         api.users.updateUser(req); //write to db
     });
@@ -93,7 +108,7 @@ function initApiControllers(){
 
 ```
 
-stringify ajv schemas:
+stringify ajv schemas: (can return null schema if you want to use the slower JSON.stringify)
 ```javascript
 function blogController_Schemas(schemas) {
 
@@ -128,6 +143,20 @@ function blogController_Schemas(schemas) {
 }
 
 ```
+
+to use with nginx reverse proxy: (so https will use same web site cert of let's encrypt):
+```javascript
+	location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Fowarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Fowarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+ ```
 
 ```javascript
  "dependencies": {
