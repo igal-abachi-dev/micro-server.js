@@ -144,6 +144,20 @@ function blogController_Schemas(schemas) {
 
 ```
 
+to use with nginx reverse proxy: (so https will use same web site cert of let's encrypt):
+```javascript
+	location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Fowarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Fowarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+ ```
+
 ```javascript
  "dependencies": {
    "axios": "^0.19.2",
