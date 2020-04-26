@@ -109,6 +109,27 @@ function blogController_Schemas(schemas) {
         },
         required: ['title']
     };
+    
+    schemas['arr'] = {
+  title: ' array',
+  type: 'object',
+  properties: {
+    ids: {
+      type: 'array',
+      items: [
+        {
+          type: 'object',
+          properties: {
+            a: {
+              type: 'string'
+            }
+          }
+        }
+      ]
+    }
+  }
+};
+
 }
 
 ```
