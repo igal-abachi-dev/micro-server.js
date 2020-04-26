@@ -71,7 +71,15 @@ function lookupRoute(req, res, defaultRoute, isRespMsgPack) {
             } else {
                 let schema = null;
                 if (result.schema != null) {
-                    schema = schemas[result.schema];
+                    let schemaFn = schemas[result.schema];
+                    schema = (data) => {
+                        try {
+                            return schemaFn(data);//faster
+                        } catch {
+                            //schema failed... (required field?)
+                            return JSON.stringify(data);//slower
+                        }
+                    };
                 }
                 sendJson(res, result.data, schema)
             }
