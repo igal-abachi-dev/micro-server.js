@@ -44,6 +44,7 @@ function lookupRoute(req, res, defaultRoute, isRespMsgPack) {
     }
     //route handlers
     if (!handle_) {
+		console.log("route not found: "+urlPath);
         //route search is case-sensitive!
         if (defaultRoute !== null) {
             return defaultRoute(req, res)
