@@ -73,6 +73,21 @@ function routes(router) {
             data: api.blog.msgPack(req) //brotli compressed
         };
     });
+    
+    //return delayed result from callback instead of immediate result from return val;\
+    router.get('/api/ntp2', (req, send) => {
+        api.time.ntp(function (result) {
+            send({
+                schema: 'ntp',
+                data: result || {}
+            });
+        }, 0);
+
+        return {
+            __delayed: true
+        };
+    });
+    
     router.post('/user/:id', (req) => {
         api.users.updateUser(req); //write to db
     });
