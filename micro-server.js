@@ -16,8 +16,6 @@ const {parseBody} = require('./string-utils.js');
 
 const {Promise} = require("bluebird");
 
-const {startCluster} = require('./clusterizer.js');
-
 const _ = require('lodash');
 
 const compression = require('compression');

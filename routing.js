@@ -62,12 +62,28 @@ function lookupRoute(req, res, defaultRoute, isRespMsgPack) {
 
     //chainRequestHandlers(fnArray, req) //many handlers for same route?
 
+    let onSend = function (result) {
+        if (result == null) {
+            sendEmpty(res);
+        } else {
+            if (isRespMsgPack || result.binary == true) {
+                sendMsgPack(res, result);
+            } else {
+                let schema = null;
+                if (result.schema != null) {
+                    schema = schemas[result.schema];
+                }
+                sendJson(res, result.data, schema)
+            }
+        }
+    };
+
     try {
         new Promise((resolve, reject) => { //free networking for more requests
             let result = null;
             if (handle_.length > 0)
                 try {
-                    result = handle_[0](req); //main Call route handler of the API
+                    result = handle_[0](req, onSend); //main Call route handler of the API
                 } catch (err) {
                     reject(err);
                     return null;
@@ -75,15 +91,9 @@ function lookupRoute(req, res, defaultRoute, isRespMsgPack) {
             return resolve(result);
         }).then(result => {
             //send result
-            if (result == null) {
-                sendEmpty(res);
-            } else {
-                if (isRespMsgPack || result.binary == true) {
-                    sendMsgPack(res, result);
-                } else {
-                    sendJson(res, result.data, schemas[result.schema])
-                }
-            }
+            if (result == null || !result.__delayed)
+                onSend(result);
+
         }).catch(err => console.error(err, null));
     } catch (err) {
         console.error(err, null);
