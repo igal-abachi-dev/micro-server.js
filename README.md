@@ -93,7 +93,7 @@ function initApiControllers(){
 
 ```
 
-stringify ajv schemas:
+stringify ajv schemas: (can return null schema if you want to use the slower JSON.stringify)
 ```javascript
 function blogController_Schemas(schemas) {
 
