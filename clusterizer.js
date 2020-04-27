@@ -1,5 +1,5 @@
 const cluster = require('cluster');
-const numCPUs = require('os').cpus().length;//phys+HT
+const numCPUs = require('os').cpus().length * 2;//phys+HT
 
 
 const {Promise} = require("bluebird");
