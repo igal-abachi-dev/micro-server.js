@@ -177,3 +177,6 @@ to use with nginx reverse proxy: (so https will use same web site cert of let's 
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v17.3.0"
   }
 ```
+
+
+todo: error handling  , move js to typesciprt...
