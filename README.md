@@ -180,3 +180,5 @@ to use with nginx reverse proxy: (so https will use same web site cert of let's 
 
 
 todo: error handling  , move js to typesciprt...
+
+finalhandler , firebase
