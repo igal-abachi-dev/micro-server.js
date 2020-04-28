@@ -145,6 +145,7 @@ function blogController_Schemas(schemas) {
 ```
 
 to use with nginx reverse proxy: (so https will use same web site cert of let's encrypt):
+instead of using https inside node itself
 ```javascript
 	location / {
         proxy_pass http://127.0.0.1:3001;
