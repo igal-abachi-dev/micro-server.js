@@ -14,6 +14,8 @@ const {sanitizeUrl} = require('./url-utils.js');
 
 const LRUCache = require('mnemonist/lru-cache');
 
+const voidResultsAreDelayed = true;//default return null treated as __delayed = true , response
+
 // mnemonist/lru-cache.js
 
 const cache = new LRUCache(1000);
@@ -64,26 +66,31 @@ function lookupRoute(req, res, defaultRoute, isRespMsgPack) {
     //chainRequestHandlers(fnArray, req) //many handlers for same route?
 
     let onSend = function (result) {
-        if (result == null) {
-            sendEmpty(res);
-        } else {
-            if (isRespMsgPack || result.binary == true) {
-                sendMsgPack(res, result);
+        try {
+            if (result == null) {
+                sendEmpty(res);
             } else {
-                let schema = null;
-                if (result.schema != null) {
-                    let schemaFn = schemas[result.schema];
-                    schema = (data) => {
-                        try {
-                            return schemaFn(data);//faster
-                        } catch {
-                            //schema failed... (required field?)
-                            return JSON.stringify(data);//slower
-                        }
-                    };
+                if (isRespMsgPack || result.binary == true) {
+                    sendMsgPack(res, result);
+                } else {
+                    let schema = null;
+                    if (result.schema != null) {
+                        let schemaFn = schemas[result.schema];
+                        schema = (data) => {
+                            try {
+                                return schemaFn(data);//faster
+                            } catch {
+                                //schema failed... (required field?)
+                                return JSON.stringify(data);//slower
+                            }
+                        };
+                    }
+                    sendJson(res, result.data, schema)
                 }
-                sendJson(res, result.data, schema)
             }
+        }catch (e) {
+            //response was already sent?
+            console.log(e);
         }
     };
 
@@ -100,7 +107,7 @@ function lookupRoute(req, res, defaultRoute, isRespMsgPack) {
             return resolve(result);
         }).then(result => {
             //send result
-            if (result == null || !result.__delayed)
+            if ((result == null && voidResultsAreDelayed == false) || !result.__delayed) //if delayed , onSend() called from  callback
                 onSend(result);
 
         }).catch(err => console.error(err, null));
