@@ -46,7 +46,7 @@ function lookupRoute(req, res, defaultRoute, isRespMsgPack) {
     }
     //route handlers
     if (!handle_) {
-		console.log("route not found: "+urlPath);
+        console.log("route not found: " + urlPath);
         //route search is case-sensitive!
         if (defaultRoute !== null) {
             return defaultRoute(req, res)
@@ -88,7 +88,7 @@ function lookupRoute(req, res, defaultRoute, isRespMsgPack) {
                     sendJson(res, result.data, schema)
                 }
             }
-        }catch (e) {
+        } catch (e) {
             //response was already sent?
             console.log(e);
         }
@@ -107,7 +107,7 @@ function lookupRoute(req, res, defaultRoute, isRespMsgPack) {
             return resolve(result);
         }).then(result => {
             //send result
-            if ((result == null && voidResultsAreDelayed == false) || !result.__delayed) //if delayed , onSend() called from  callback
+            if ((result == null && voidResultsAreDelayed == false) || (result || {}).__delayed == true) //if delayed , onSend() called from  callback
                 onSend(result);
 
         }).catch(err => console.error(err, null));
