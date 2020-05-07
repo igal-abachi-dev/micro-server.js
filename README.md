@@ -41,7 +41,7 @@ require('./http/clusterizer.js').startCluster(()=>{
     require('./http/micro-server.js')({
         allowCORS: true,
         https: {
-           key: fs.readFileSync(__dirname + '/server.key'),
+           key: fs.readFileSync(__dirname + '/server.key'), //or use nginx reverse proxy below...
            cert:  fs.readFileSync(__dirname + '/server.crt')
          },
         http2: true,
