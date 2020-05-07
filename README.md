@@ -41,7 +41,7 @@ require('./http/clusterizer.js').startCluster(()=>{
     require('./http/micro-server.js')({
         allowCORS: true,
         https: {
-           key: fs.readFileSync(__dirname + '/server.key'),
+           key: fs.readFileSync(__dirname + '/server.key'), //or use nginx reverse proxy below...
            cert:  fs.readFileSync(__dirname + '/server.crt')
          },
         http2: true,
@@ -55,15 +55,14 @@ require('./http/clusterizer.js').startCluster(()=>{
 routes:
 ```javascript
 const api = {
-    blog: {},
-    users: {}
+    blog: loadCtrl('blog'),
+    users: loadCtrl('users')
 };
-initApiControllers();
 
 function routes(router) {
     router.get('/posts', (req) => {
         return {
-            schema: 'post',
+            schema: 'post', //schema is optional , on api that needs faster stringify
             data: api.blog.posts(req)
         };
     });
@@ -82,10 +81,6 @@ function routes(router) {
                 data: result || {}
             });
         }, 0);
-
-        return {
-            __delayed: true
-        };
     });
     
     router.post('/user/:id', (req) => {
@@ -93,18 +88,16 @@ function routes(router) {
     });
 }
 
-function initApiControllers(){
+
+function loadCtrl(ctrl) {
     try {
-        api.blog = require('./controllers/blog.js');
+        return require('./controllers/' + ctrl + '.js');
     } catch (e) {
-        console.error(e)
-    }
-    try {
-        api.users = require('./controllers/users.js');
-    } catch (e) {
-        console.error(e)
+        console.error(e);
+        return {};
     }
 }
+
 
 ```
 
