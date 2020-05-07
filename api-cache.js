@@ -1,4 +1,4 @@
-// mnemonist/lru-cache.js
+const LRUCache = require('mnemonist/lru-cache');
 
 
 /*
@@ -21,26 +21,31 @@ const ApiCache = function (apiCall, poll = false) {
 
     const self = this;
     self.lastUpdate = new Date();
-    self.lastValue = {};//use mnemunics lru cache
-    //lastSuccessfulValue
-    //lastSuccessTime
+    self.lastValue = new LRUCache(1000);//use mnemunics lru cache
+    self.lastSuccessfulValue = new LRUCache(1000);
+    self.lastSuccessTime = {};
     self.apiCall = apiCall;
     self.poll = poll;
     return {
         getValue: function (args, callback) {
             const key = (args == null) ? -1 : JSON.stringify(args);
-            const sendResult_ = function () {
+            const sendResult_ = function (resultWasError = false) {
                 try {
                     if (callback) {
-                        console.log(self.lastUpdate.toISOString());
-                        callback(self.lastValue[key]);
+                        if (!resultWasError) {
+                            console.log(self.lastUpdate.toISOString());
+                            callback(self.lastValue.get(key));
+                        } else {
+                            console.log(self.lastSuccessTime[key].toISOString());
+                            callback(self.lastSuccessfulValue.get(key));
+                        }
                     }
                 } catch (e) {
                     console.error(e);
                 }
             };
 
-            if (self.lastValue[key] != null) {
+            if (self.lastValue.get(key) != null) {
                 const cacheExpiration =
                     new Date(self.lastUpdate.getTime()).setMinutes(self.lastUpdate.getMinutes() + 2);
                 //>100sec (min: >35 sec)
@@ -56,19 +61,33 @@ const ApiCache = function (apiCall, poll = false) {
                 let updateResultCb =
                     function (result) {
                         self.lastUpdate = new Date();
-                        self.lastValue[key] = result || {};
+                        self.lastValue.set(key, result || {});
+                        if (result != "error") {
+                            self.lastSuccessfulValue.set(key, self.lastValue.get(key));
+                            self.lastSuccessTime[key] = new Date();
+                        }
+
                         try {
-                            sendResult_();
+                            sendResult_(result == "error");
                         } catch (e) {
+                            sendResult_(true);
 //bg poll , no res to return in callback
                         }
                     };
 
                 let updateResultPollCb =
                     function (result) {
+                        if (result == "error")
+                            console.log("bg poll: quota exceeded");
+
                         self.lastUpdate = new Date();
-                        self.lastValue[key] = result || {};
+                        self.lastValue.set(key, result || {});
                         console.log("updated cache: " + key);
+
+                        if (result != "error") {
+                            self.lastSuccessfulValue.set(key, self.lastValue.get(key));
+                            self.lastSuccessTime[key] = new Date();
+                        }
                     };
                 if (args == null) {
                     self.apiCall(updateResultCb);
@@ -126,7 +145,7 @@ const ApiCache = function (apiCall, poll = false) {
             } catch (e) {
                 //self.lastValue = null;
                 console.error("error", e);
-                sendResult_();
+                sendResult_(true);
             }
         }
     };
