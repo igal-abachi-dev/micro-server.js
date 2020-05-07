@@ -36,7 +36,9 @@ const ApiCache = function (apiCall, poll = false) {
                             console.log(self.lastUpdate.toISOString());
                             callback(self.lastValue.get(key));
                         } else {
-                            console.log(self.lastSuccessTime[key].toISOString());
+							let resultTime = self.lastSuccessTime[key];
+							if(resultTime != null)
+								console.log(resultTime.toISOString());
                             callback(self.lastSuccessfulValue.get(key));
                         }
                     }
