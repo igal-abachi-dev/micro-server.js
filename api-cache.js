@@ -24,6 +24,7 @@ const ApiCache = function (apiCall, poll = false) {
     self.lastValue = new LRUCache(1000);//use mnemunics lru cache
     self.lastSuccessfulValue = new LRUCache(1000);
     self.lastSuccessTime = {};
+    self.pollers= {};
     self.apiCall = apiCall;
     self.poll = poll;
     return {
@@ -115,8 +116,9 @@ const ApiCache = function (apiCall, poll = false) {
                             break;
                     }
                 }
-                if (self.poll == true) {//poll in background without waiting for user to call , so it will be cached when called
-                    setInterval(() => {
+                if (self.poll == true && self.pollers[key] == null) {
+                    //poll in background without waiting for user to call , so it will be cached when called
+                    self.pollers[key] = setInterval(() => {
                         console.log("bg poll:" + key);
                         if (args == null) {
                             self.apiCall(updateResultPollCb);
@@ -142,7 +144,7 @@ const ApiCache = function (apiCall, poll = false) {
                                     break;
                             }
                         }
-                    }, 90 * 1000);
+                    }, 5*60 * 1000);
                 }
             } catch (e) {
                 //self.lastValue = null;

@@ -38,7 +38,7 @@ function sigQuitHandler(isMaster, worker) {
 function startCluster(startServerRoutine) {
     if (cluster.isMaster) {
         console.log(`Master ${process.pid} is running...`);
-        cluster.schedulingPolicy = cluster.SCHED_NONE; // windows: SCHED_NONE , linux: SCHED_RR  !!!
+        cluster.schedulingPolicy = cluster.SCHED_RR;//SCHED_NONE; // windows: SCHED_NONE , linux: SCHED_RR  !!!
 
         for (let i = 0; i < numCPUs; i++) {
             const worker = cluster.fork();
