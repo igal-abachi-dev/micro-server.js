@@ -144,7 +144,7 @@ const ApiCache = function (apiCall, poll = false) {
                                     break;
                             }
                         }
-                    }, 5*60 * 1000);
+                    }, 15 * 60 * 1000);//once 10-15 minutes? or update once / 3 hours?  (3*60)*(60*1000)
                 }
             } catch (e) {
                 //self.lastValue = null;
