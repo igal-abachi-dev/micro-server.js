@@ -195,7 +195,7 @@ function initServer(config) {
 
     const webHost = config.allowExtrernalCalls ? '0.0.0.0' : '127.0.0.1';
     const _server = {
-        listen: (port = 3000) => {
+        listen: (port = 3000, afterListen) => {
             console.log('listening on: ' + webHost + ':' + port + ' ...');
             server.on('error', function (e) {
                 //'EADDRINUSE'
@@ -203,7 +203,11 @@ function initServer(config) {
                 //	process.exit(1);
             });
 
-            server.listen(port, webHost,()=>{});
+            server.listen(port, webHost,()=>{
+                if(afterListen != null){
+                    afterListen();
+                }
+            });
         }
     }
 

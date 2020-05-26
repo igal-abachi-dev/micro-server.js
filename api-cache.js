@@ -1,5 +1,6 @@
 const LRUCache = require('mnemonist/lru-cache');
-
+const PollInterval = 24 * 60 * 60 * 1000;//15 * 60 * 1000;
+//once 24 hours , for 65 playlists
 
 /*
 usage:
@@ -24,10 +25,43 @@ const ApiCache = function (apiCall, poll = false) {
     self.lastValue = new LRUCache(1000);//use mnemunics lru cache
     self.lastSuccessfulValue = new LRUCache(1000);
     self.lastSuccessTime = {};
-    self.pollers= {};
+    self.pollers = {};
     self.apiCall = apiCall;
     self.poll = poll;
     return {
+        setCacheData: function (data) {
+            if (data != null) {
+                self.lastUpdate = data.lastUpdate;
+                self.lastSuccessTime = data.times;
+                try {
+                    for (let key in data.kv) {
+                        let value = data.kv[key];
+                        self.lastValue.set(key, value);
+                    }
+                } catch (e) {
+                    console.error("error: setCacheData()");
+                }
+            }
+        },
+        getCacheData: function () {
+            const kv = {};
+            const entriesIterator = self.lastValue.entries();
+
+            let entry = null;
+            do {
+                entry = entriesIterator.next();
+                let e = entry.value;
+                if (e != null)
+                    kv[e[0]] = e[1];
+            }
+            while (!entry.done);
+
+            return {
+                kv: kv,
+                times: self.lastSuccessTime,
+                lastUpdate: self.lastUpdate
+            };
+        },
         getValue: function (args, callback) {
             const key = (args == null) ? -1 : JSON.stringify(args);
             const sendResult_ = function (resultWasError = false) {
@@ -37,9 +71,9 @@ const ApiCache = function (apiCall, poll = false) {
                             console.log(self.lastUpdate.toISOString());
                             callback(self.lastValue.get(key));
                         } else {
-							let resultTime = self.lastSuccessTime[key];
-							if(resultTime != null)
-								console.log(resultTime.toISOString());
+                            let resultTime = self.lastSuccessTime[key];
+                            if (resultTime != null)
+                                console.log(resultTime.toISOString());
                             callback(self.lastSuccessfulValue.get(key));
                         }
                     }
@@ -144,7 +178,7 @@ const ApiCache = function (apiCall, poll = false) {
                                     break;
                             }
                         }
-                    }, 15 * 60 * 1000);//once 10-15 minutes? or update once / 3 hours?  (3*60)*(60*1000)
+                    }, PollInterval);//once 10-15 minutes? or update once / 3 hours?  (3*60)*(60*1000)
                 }
             } catch (e) {
                 //self.lastValue = null;
