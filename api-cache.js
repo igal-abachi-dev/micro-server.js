@@ -1,5 +1,6 @@
 const LRUCache = require('mnemonist/lru-cache');
 const PollInterval = 24 * 60 * 60 * 1000;//15 * 60 * 1000;
+const microCacheExpiration = 24*60;//2;
 //once 24 hours , for 65 playlists
 
 /*
@@ -31,7 +32,7 @@ const ApiCache = function (apiCall, poll = false) {
     return {
         setCacheData: function (data) {
             if (data != null) {
-                self.lastUpdate = data.lastUpdate;
+                self.lastUpdate = new Date(data.lastUpdate);
                 self.lastSuccessTime = data.times;
                 try {
                     for (let key in data.kv) {
@@ -84,7 +85,7 @@ const ApiCache = function (apiCall, poll = false) {
 
             if (self.lastValue.get(key) != null) {
                 const cacheExpiration =
-                    new Date(self.lastUpdate.getTime()).setMinutes(self.lastUpdate.getMinutes() + 2);
+                    new Date(self.lastUpdate.getTime()).setMinutes(self.lastUpdate.getMinutes() + microCacheExpiration);
                 //>100sec (min: >35 sec)
 
                 if (cacheExpiration > new Date().getTime()) {
