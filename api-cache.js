@@ -1,6 +1,6 @@
 const LRUCache = require('mnemonist/lru-cache');
-const PollInterval = 24 * 60 * 60 * 1000;//15 * 60 * 1000;
-const microCacheExpiration = 24*60;//2;
+const PollInterval = (6 * 60) * (60 * 1000);//15 * 60 * 1000;
+const microCacheExpiration = 6*60;//2;
 //once 24 hours , for 65 playlists
 
 /*
